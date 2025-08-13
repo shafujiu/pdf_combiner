@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-
+import android.graphics.Color
 
 class ImageFromPdfConfig(
     val rescale: ImageScale,
@@ -66,13 +66,6 @@ class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
                         bitmap?.compress(Bitmap.CompressFormat.PNG, config.compression.value, out)
                         bitmap?.let { pdfImages.add(it) }
                     }
-                    val outputStream = FileOutputStream("$filepath")
-                    bitmap?.compress(
-                        Bitmap.CompressFormat.PNG,
-                        config.compression.value,
-                        outputStream
-                    )
-                    outputStream.close()
                 }
                 renderer.close()
                 fileDescriptor.close()
@@ -87,31 +80,36 @@ class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
             }
         }
     }
-
-    private fun mergeThemAll(
-        orderImagesList: List<Bitmap>?, maxWidth: Int, maxHeight: Int
-    ): Bitmap? {
-        var result: Bitmap? = null
-        if (!orderImagesList.isNullOrEmpty()) {
-            orderImagesList[0].width
-            orderImagesList[0].height
-
-            result = Bitmap.createBitmap(
-                maxWidth, maxHeight * orderImagesList.size, Bitmap.Config.RGB_565
-            )
-            Log.d("pdf_combiner", "Create Bitmap")
-            val canvas = Canvas(result)
-            val paint = Paint()
-            var chunkHeightCal = 0
-            for (i in orderImagesList.indices) {
-                canvas.drawBitmap(
-                    orderImagesList[i], 0F, chunkHeightCal.toFloat(), paint
-                )
-                chunkHeightCal += maxHeight
-            }
-        } else {
+    
+    private fun mergeThemAll(orderImagesList: List<Bitmap>?, maxWidth: Int, maxHeight: Int): Bitmap? {
+        if (orderImagesList.isNullOrEmpty()) {
             this.result.error("400", "MergeError", "Couldn't merge bitmaps")
+            return null
         }
+        val targetWidth = if (maxWidth == -1) orderImagesList[0].width else maxWidth
+
+        val chunkHeightCal = orderImagesList.sumOf { it.height }
+        val targetHeight = if (maxHeight == -1) chunkHeightCal else maxHeight * orderImagesList.size
+        val result =
+                Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565)
+
+        val canvas = Canvas(result)
+        val paint = Paint()
+        canvas.drawColor(Color.parseColor("#FFFFFF"))
+        var currentHeight = 0
+        for (bitmap in orderImagesList) {
+            // 计算缩放后的宽高
+            val scaledWidth = targetWidth
+            val scaledHeight = if (maxHeight == -1) bitmap.height else maxHeight
+            // 缩放 bitmap
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+            canvas.drawBitmap(scaledBitmap, 0f, currentHeight.toFloat(), paint)
+            currentHeight += scaledHeight
+    
+            // 如果不再需要原 bitmap，可以回收 scaledBitmap 的内存（可选）
+            scaledBitmap.recycle()
+        }
+
         return result
     }
 }
