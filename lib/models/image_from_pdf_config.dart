@@ -1,6 +1,11 @@
 import 'image_compression.dart';
 import 'image_scale.dart';
 
+enum ImageFormat {
+  png,
+  jpg,
+}
+
 /// Configuration for generating images from a PDF.
 class ImageFromPdfConfig {
   /// The scale to apply to the images when generating the PDF.
@@ -12,6 +17,8 @@ class ImageFromPdfConfig {
   /// Indicates whether to create a single image or separate images for each page.
   final bool createOneImage;
 
+  final ImageFormat imageFormat;
+
   /// Creates an instance of [ImageFromPdfConfig].
   ///
   /// [rescale] allows specifying a scaling option for the images.
@@ -21,5 +28,6 @@ class ImageFromPdfConfig {
     ImageScale? rescale,
     this.compression = ImageCompression.none,
     this.createOneImage = false,
+    this.imageFormat = ImageFormat.png,
   }) : rescale = rescale ?? ImageScale.original;
 }

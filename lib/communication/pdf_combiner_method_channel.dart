@@ -106,6 +106,7 @@ class MethodChannelPdfCombiner extends PdfCombinerPlatform {
         'width': config.rescale.width,
         'compression': config.compression.value,
         'createOneImage': config.createOneImage,
+        'imageFormat': config.imageFormat.name,
       },
     );
     return result?.cast<String>();

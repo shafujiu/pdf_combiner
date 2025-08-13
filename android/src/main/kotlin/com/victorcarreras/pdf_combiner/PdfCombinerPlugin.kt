@@ -63,12 +63,13 @@ class PdfCombinerPlugin : FlutterPlugin, MethodCallHandler {
                 val maxWidth = call.argument<Int>("width")
                 val maxHeight = call.argument<Int>("height")
                 val createOneImage = call.argument<Boolean>("createOneImage")
+                val imageFormat = call.argument<String>("imageFormat")
 
-                if (path != null && outputDirPath != null && compression != null && maxWidth != null && maxHeight != null && createOneImage != null) {
+                if (path != null && outputDirPath != null && compression != null && maxWidth != null && maxHeight != null && createOneImage != null && imageFormat != null) {
                     CreateImageFromPDF(context, result).create(
                         path, outputDirPath, ImageFromPdfConfig(
                             ImageScale(maxWidth, maxHeight),
-                            CompressionLevel(compression), createOneImage
+                            CompressionLevel(compression), createOneImage, imageFormat
                         )
                     )
                 } else {

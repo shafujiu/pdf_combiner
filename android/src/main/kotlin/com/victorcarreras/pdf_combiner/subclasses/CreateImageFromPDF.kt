@@ -22,7 +22,8 @@ import android.graphics.Color
 class ImageFromPdfConfig(
     val rescale: ImageScale,
     val compression: CompressionLevel,
-    val createOneImage: Boolean
+    val createOneImage: Boolean,
+    val imageFormat: String
 )
 
 class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
@@ -35,6 +36,11 @@ class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
         inputPath: String, outputPath: String, config: ImageFromPdfConfig
     ) {
         val pdfImagesPath: MutableList<String> = mutableListOf()
+        var format = Bitmap.CompressFormat.PNG
+        when (config.imageFormat) {
+            "png" -> format = Bitmap.CompressFormat.PNG
+            "jpg" -> format = Bitmap.CompressFormat.JPEG
+        }
 
         val pdfFromMultipleImage = GlobalScope.launch(Dispatchers.IO) {
             try {
@@ -50,20 +56,20 @@ class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
                     pdfImagesPath.add("$outputPath/$imageName")
                     val outputFile = File(outputPath, "$imageName")
                     FileOutputStream(outputFile).use { out ->
-                        bitmap.compress(Bitmap.CompressFormat.PNG, config.compression.value, out)
+                        bitmap.compress(format, config.compression.value, out)
                         pdfImages.add(bitmap)
                     }
                     page.close()
                 }
 
                 if (config.createOneImage) {
-                    val filepath = "$outputPath/image.png"
+                    val filepath = "$outputPath/image.${config.imageFormat}"
                     pdfImagesPath.clear()
                     pdfImagesPath.add(filepath)
                     Log.d("pdf_combiner", "pathfile: $filepath")
                     val bitmap = mergeThemAll(pdfImages, config.rescale.maxWidth, config.rescale.maxHeight)
                     FileOutputStream(filepath).use { out ->
-                        bitmap?.compress(Bitmap.CompressFormat.PNG, config.compression.value, out)
+                        bitmap?.compress(format, config.compression.value, out)
                         bitmap?.let { pdfImages.add(it) }
                     }
                 }
