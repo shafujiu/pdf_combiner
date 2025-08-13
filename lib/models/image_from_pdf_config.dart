@@ -18,6 +18,8 @@ class ImageFromPdfConfig {
   final bool createOneImage;
 
   final ImageFormat imageFormat;
+  /// the pdf file pages index, if null, all pages will be extracted
+  final List<int>? pageNumbers;
 
   /// Creates an instance of [ImageFromPdfConfig].
   ///
@@ -29,5 +31,6 @@ class ImageFromPdfConfig {
     this.compression = ImageCompression.none,
     this.createOneImage = false,
     this.imageFormat = ImageFormat.png,
+    this.pageNumbers,
   }) : rescale = rescale ?? ImageScale.original;
 }
