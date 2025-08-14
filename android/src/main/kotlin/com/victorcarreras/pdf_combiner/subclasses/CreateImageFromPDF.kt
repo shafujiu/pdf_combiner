@@ -66,10 +66,14 @@ class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
                     val scale = 3.0f
                     val width = (page.width * scale).toInt()
                     val height = (page.height * scale).toInt()
-
+                    // TODO: width height can't use page.width and page.height will be deformed
                     Log.d("pdf_combiner", "width: $width, height: $height")
                     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                    
+                    val canvas = Canvas(bitmap)
+                    canvas.drawColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    
                     val imageName = "image_${pageIndex + 1}.${config.imageFormat}"
                     pdfImagesPath.add("$outputPath/$imageName")
                     val outputFile = File(outputPath, "$imageName")
@@ -77,6 +81,7 @@ class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
                         bitmap.compress(format, config.compression.value, out)
                         pdfImages.add(bitmap)
                     }
+                    // bitmap.recycle()
                     page.close()
                 }
 
@@ -88,11 +93,14 @@ class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
                     val bitmap = mergeThemAll(pdfImages, config.rescale.maxWidth, config.rescale.maxHeight)
                     FileOutputStream(filepath).use { out ->
                         bitmap?.compress(format, config.compression.value, out)
-                        bitmap?.let { pdfImages.add(it) }
+                        // bitmap?.let { pdfImages.add(it) }
                     }
+                    bitmap?.recycle()
                 }
                 renderer.close()
                 fileDescriptor.close()
+                pdfImages.forEach { it?.recycle() }
+                pdfImages.clear()
             } catch (e: IOException) {
                 e.printStackTrace()
             }
@@ -123,7 +131,7 @@ class CreateImageFromPDF(getContext: Context, getResult: MethodChannel.Result) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG) // antialiasing
         paint.isFilterBitmap = true              // high quality scaling
         paint.isDither = true                    // reduce color band
-        canvas.drawColor(Color.parseColor("#FFFFFF"))
+        canvas.drawColor(Color.WHITE)
         var currentHeight = 0
         for (bitmap in orderImagesList) {
             // if maxWidth or maxHeight is 0, use original image
